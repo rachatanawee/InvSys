@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { Product, Location, MovementType, InventoryMovement } from '../types';
 
-// Read credentials from process.env (or a similar mechanism in this environment)
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'YOUR_SUPABASE_URL';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY || 'YOUR_SUPABASE_ANON_KEY';
+// Read credentials from import.meta.env for Vite
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'YOUR_SUPABASE_URL';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
 
 const shouldUseLiveApi = supabaseUrl && !supabaseUrl.startsWith('YOUR_') && supabaseAnonKey && !supabaseAnonKey.startsWith('YOUR_');
 
@@ -31,22 +31,15 @@ if (shouldUseLiveApi) {
             },
         },
         getProducts: async (): Promise<Product[]> => {
-            const { data, error } = await client.from('products').select('*, locations(name)');
+            const { data, error } = await client.from('products').select('*');
             if (error) throw error;
-            // The actual query needs to join to get inventory quantity
-            const { data: inventory, error: invError } = await client.from('inventory').select('*');
-            if (invError) throw invError;
-            
-            const productMap = new Map(data.map(p => [p.id, {...p, quantity: 0, locationId: ''}]));
-            inventory.forEach(inv => {
-                const product = productMap.get(inv.product_id);
-                if (product) {
-                    product.quantity = inv.quantity;
-                    product.locationId = inv.location_id;
-                }
-            });
-
-            return Array.from(productMap.values());
+            return data.map(p => ({
+                id: p.id,
+                name: p.name,
+                sku: p.sku,
+                quantity: p.quantity,
+                locationId: p.location_id
+            }));
         },
         getLocations: async (): Promise<Location[]> => {
             const { data, error } = await client.from('locations').select('*');
@@ -55,11 +48,19 @@ if (shouldUseLiveApi) {
         },
         getMovements: async (): Promise<InventoryMovement[]> => {
             const { data, error } = await client
-                .from('movements')
+                .from('inventory_movements')
                 .select('*')
                 .order('timestamp', { ascending: false });
             if (error) throw error;
-            return data as InventoryMovement[];
+            return data.map(m => ({
+                id: m.id,
+                productId: m.product_id,
+                quantity: m.quantity,
+                type: m.type,
+                fromLocationId: m.from_location_id,
+                toLocationId: m.to_location_id,
+                timestamp: m.timestamp
+            }));
         },
         addMovement: async (
             type: MovementType,
@@ -68,21 +69,16 @@ if (shouldUseLiveApi) {
             fromLocationId?: string,
             toLocationId?: string
         ): Promise<any> => {
-            const { data, error } = await client.rpc('handle_inventory_movement', {
-                p_product_id: productId,
-                p_quantity: quantity,
-                p_movement_type: type,
-                p_from_location_id: fromLocationId,
-                p_to_location_id: toLocationId,
-            });
-
-            if (error) {
-                 console.error('RPC Error:', error);
-                 if (error.message.includes('Insufficient stock')) {
-                     throw new Error('Insufficient stock at source location.');
-                 }
-                throw error;
-            }
+            const { data, error } = await client
+                .from('inventory_movements')
+                .insert({
+                    product_id: productId,
+                    quantity,
+                    type,
+                    from_location_id: fromLocationId,
+                    to_location_id: toLocationId
+                });
+            if (error) throw error;
             return data;
         },
     };

@@ -8,7 +8,7 @@ import { useTranslation } from '../hooks/useTranslation';
 const Login = () => {
     const { t } = useTranslation();
     const [email, setEmail] = useState('demo@user.com');
-    const [password, setPassword] = useState('password');
+    const [password, setPassword] = useState('password123');
     const [rememberMe, setRememberMe] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -123,8 +123,7 @@ const Login = () => {
                     </div>
                 </form>
                  <div className="text-center text-xs text-dark-muted-foreground">
-                    <p>{t('login.tryWith')} <span className="font-mono">locked@user.com</span></p>
-                    <p>{t('login.tryWithIncorrectPassword')} <span className="font-mono">demo@user.com</span>.</p>
+                    <p>ใช้ <span className="font-mono">demo@user.com</span> / <span className="font-mono">password123</span></p>
                 </div>
             </div>
         </div>
