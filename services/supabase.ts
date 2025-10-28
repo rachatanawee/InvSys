@@ -1,139 +1,197 @@
+import { createClient } from '@supabase/supabase-js';
 import { Product, Location, MovementType, InventoryMovement } from '../types';
 
-// Mock Data
-const mockLocations: Location[] = [
-  { id: 'loc_1', name: 'Main Warehouse' },
-  { id: 'loc_2', name: 'Dock A' },
-  { id: 'loc_3', name: 'Retail Storefront' },
-  { id: 'loc_4', name: 'Overflow Storage' },
-];
+// Read credentials from process.env (or a similar mechanism in this environment)
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'YOUR_SUPABASE_URL';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY || 'YOUR_SUPABASE_ANON_KEY';
 
-const mockProducts: Product[] = [
-  { id: 'prod_1', name: 'Quantum Widget', sku: 'QW-1001', quantity: 150, locationId: 'loc_1' },
-  { id: 'prod_2', name: 'Hyper Spanner', sku: 'HS-2023', quantity: 75, locationId: 'loc_1' },
-  { id: 'prod_3', name: 'Flux Capacitor Core', sku: 'FC-C-003', quantity: 25, locationId: 'loc_2' },
-  { id: 'prod_4', name: 'Photon Drill Bit', sku: 'PD-B-450', quantity: 500, locationId: 'loc_3' },
-  { id: 'prod_5', name: 'Neutrino Probe', sku: 'NP-X9', quantity: 30, locationId: 'loc_4' },
-  { id: 'prod_6', name: 'Plasma Injector', sku: 'PI-778', quantity: 200, locationId: 'loc_1' },
-  { id: 'prod_7', name: 'Tachyon Emitter', sku: 'TE-5G', quantity: 120, locationId: 'loc_2' },
-  { id: 'prod_8', name: 'Gravity Plating', sku: 'GP-99', quantity: 800, locationId: 'loc_3' },
-  { id: 'prod_9', name: 'Dark Matter Filter', sku: 'DMF-01', quantity: 5, locationId: 'loc_4' },
-  { id: 'prod_10', name: 'Warp Coil', sku: 'WC-42', quantity: 95, locationId: 'loc_1' },
-];
+const shouldUseLiveApi = supabaseUrl && !supabaseUrl.startsWith('YOUR_') && supabaseAnonKey && !supabaseAnonKey.startsWith('YOUR_');
 
-let mockMovements: InventoryMovement[] = [
-  { id: 'mov_1', productId: 'prod_1', quantity: 50, type: MovementType.RECEIVE, toLocationId: 'loc_1', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString() },
-  { id: 'mov_2', productId: 'prod_2', quantity: 25, type: MovementType.TRANSFER, fromLocationId: 'loc_1', toLocationId: 'loc_2', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 4).toISOString() },
-  { id: 'mov_3', productId: 'prod_4', quantity: 100, type: MovementType.SHIP, fromLocationId: 'loc_3', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString() },
-  { id: 'mov_4', productId: 'prod_3', quantity: 10, type: MovementType.RECEIVE, toLocationId: 'loc_2', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString() },
-  { id: 'mov_5', productId: 'prod_1', quantity: 5, type: MovementType.SHIP, fromLocationId: 'loc_1', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString() },
-];
+let supabaseService: any;
 
-// Mock Supabase client
-// In a real app, this would be initialized with `createClient` from '@supabase/supabase-js'
-const supabase = {
-  auth: {
-    signInWithEmail: async ({ email, password }: { email: string, password?: string }) => {
-      console.log(`Attempting to sign in with email: ${email}`);
-      await new Promise(resolve => setTimeout(resolve, 800)); // Simulate network delay
+if (shouldUseLiveApi) {
+    // --- LIVE IMPLEMENTATION ---
+    const client = createClient(supabaseUrl, supabaseAnonKey);
+    console.log("Successfully connected to live Supabase instance.");
 
-      if (email === 'locked@user.com') {
-        throw new Error('Account locked. Please contact support.');
-      }
-      
-      if (email === 'demo@user.com' && password === 'password') {
-        const user = { id: 'user_1', email };
-        return { data: { user }, error: null };
-      }
-      
-      throw new Error('Invalid credentials. Please try again.');
-    },
-    signOut: async () => {
-      console.log('Signing out...');
-      await new Promise(resolve => setTimeout(resolve, 300));
-      return { error: null };
-    }
-  },
-  
-  getProducts: async (): Promise<Product[]> => {
-    console.log('Fetching products...');
-    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
-    return JSON.parse(JSON.stringify(mockProducts));
-  },
+    supabaseService = {
+        auth: {
+            signInWithEmail: async ({ email, password }: { email: string, password?: string }) => {
+                if (!password) throw new Error("Password is required for sign-in.");
+                const { data, error } = await client.auth.signInWithPassword({ email, password });
+                if (error) {
+                    if (error.message.includes('Invalid login credentials')) throw new Error('Invalid credentials');
+                    throw error;
+                }
+                return { data: { user: data.user }, error: null };
+            },
+            signOut: async () => {
+                const { error } = await client.auth.signOut();
+                if (error) console.error("Error signing out:", error);
+            },
+        },
+        getProducts: async (): Promise<Product[]> => {
+            const { data, error } = await client.from('products').select('*, locations(name)');
+            if (error) throw error;
+            // The actual query needs to join to get inventory quantity
+            const { data: inventory, error: invError } = await client.from('inventory').select('*');
+            if (invError) throw invError;
+            
+            const productMap = new Map(data.map(p => [p.id, {...p, quantity: 0, locationId: ''}]));
+            inventory.forEach(inv => {
+                const product = productMap.get(inv.product_id);
+                if (product) {
+                    product.quantity = inv.quantity;
+                    product.locationId = inv.location_id;
+                }
+            });
 
-  getLocations: async (): Promise<Location[]> => {
-    console.log('Fetching locations...');
-    await new Promise(resolve => setTimeout(resolve, 300));
-    return JSON.parse(JSON.stringify(mockLocations));
-  },
+            return Array.from(productMap.values());
+        },
+        getLocations: async (): Promise<Location[]> => {
+            const { data, error } = await client.from('locations').select('*');
+            if (error) throw error;
+            return data as Location[];
+        },
+        getMovements: async (): Promise<InventoryMovement[]> => {
+            const { data, error } = await client
+                .from('movements')
+                .select('*')
+                .order('timestamp', { ascending: false });
+            if (error) throw error;
+            return data as InventoryMovement[];
+        },
+        addMovement: async (
+            type: MovementType,
+            productId: string,
+            quantity: number,
+            fromLocationId?: string,
+            toLocationId?: string
+        ): Promise<any> => {
+            const { data, error } = await client.rpc('handle_inventory_movement', {
+                p_product_id: productId,
+                p_quantity: quantity,
+                p_movement_type: type,
+                p_from_location_id: fromLocationId,
+                p_to_location_id: toLocationId,
+            });
 
-  getMovements: async (): Promise<InventoryMovement[]> => {
-    console.log('Fetching movements...');
-    await new Promise(resolve => setTimeout(resolve, 700));
-    return JSON.parse(JSON.stringify(mockMovements)).sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  },
-
-  addMovement: async (
-    type: MovementType,
-    productId: string,
-    quantity: number,
-    fromLocationId?: string,
-    toLocationId?: string
-  ): Promise<InventoryMovement> => {
-    console.log('Adding movement...');
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const product = mockProducts.find(p => p.id === productId);
-    if (!product) {
-      throw new Error("Product not found");
-    }
-
-    if (type === MovementType.RECEIVE) {
-      if (!toLocationId) throw new Error("Destination location is required for receiving stock.");
-      const targetProduct = mockProducts.find(p => p.id === productId && p.locationId === toLocationId);
-      if (targetProduct) {
-        targetProduct.quantity += quantity;
-      } else {
-         // Assuming new stock of an existing product can arrive at a new location
-         const newProductEntry = {...product, locationId: toLocationId, quantity: quantity };
-         mockProducts.push(newProductEntry);
-      }
-    } else if (type === MovementType.SHIP) {
-        if (!fromLocationId) throw new Error("Source location is required for shipping stock.");
-        const sourceProduct = mockProducts.find(p => p.id === productId && p.locationId === fromLocationId);
-        if (!sourceProduct || sourceProduct.quantity < quantity) {
-            throw new Error("Insufficient stock to ship.");
-        }
-        sourceProduct.quantity -= quantity;
-    } else if (type === MovementType.TRANSFER) {
-        if (!fromLocationId || !toLocationId) throw new Error("Both source and destination locations are required for transfers.");
-        const sourceProduct = mockProducts.find(p => p.id === productId && p.locationId === fromLocationId);
-        if (!sourceProduct || sourceProduct.quantity < quantity) {
-            throw new Error("Insufficient stock to transfer.");
-        }
-        sourceProduct.quantity -= quantity;
-
-        const destProduct = mockProducts.find(p => p.id === productId && p.locationId === toLocationId);
-        if(destProduct) {
-            destProduct.quantity += quantity;
-        } else {
-            mockProducts.push({ ...product, quantity, locationId: toLocationId });
-        }
-    }
-
-    const newMovement: InventoryMovement = {
-      id: `mov_${mockMovements.length + 1}`,
-      productId,
-      quantity,
-      type,
-      fromLocationId,
-      toLocationId,
-      timestamp: new Date().toISOString(),
+            if (error) {
+                 console.error('RPC Error:', error);
+                 if (error.message.includes('Insufficient stock')) {
+                     throw new Error('Insufficient stock at source location.');
+                 }
+                throw error;
+            }
+            return data;
+        },
     };
-    mockMovements.push(newMovement);
-    
-    return JSON.parse(JSON.stringify(newMovement));
-  },
-};
+} else {
+    // --- MOCK IMPLEMENTATION ---
+    console.warn("Supabase credentials not set or invalid. Falling back to mock data. Please configure your environment variables if you wish to connect to a live database.");
 
-export { supabase };
+    const mockData: {
+        products: Product[];
+        locations: Location[];
+        movements: InventoryMovement[];
+        users: any[];
+    } = {
+        products: [
+            { id: 'prod_1', name: 'Laptop Pro', sku: 'LP-001', quantity: 150, locationId: 'loc_1' },
+            { id: 'prod_2', name: 'Wireless Mouse', sku: 'WM-002', quantity: 300, locationId: 'loc_2' },
+            { id: 'prod_3', name: 'Mechanical Keyboard', sku: 'MK-003', quantity: 200, locationId: 'loc_1' },
+            { id: 'prod_4', name: '4K Monitor', sku: '4KM-004', quantity: 80, locationId: 'loc_3' },
+            { id: 'prod_5', name: 'USB-C Hub', sku: 'UCH-005', quantity: 500, locationId: 'loc_2' },
+        ],
+        locations: [
+            { id: 'loc_1', name: 'Main Warehouse' },
+            { id: 'loc_2', name: 'Downtown Store' },
+            { id: 'loc_3', name: 'Eastside Depot' },
+            { id: 'loc_4', name: 'Receiving Dock A' },
+        ],
+        movements: [
+            { id: 'mov_1', productId: 'prod_1', quantity: 50, type: MovementType.RECEIVE, toLocationId: 'loc_1', timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
+            { id: 'mov_2', productId: 'prod_2', quantity: 10, type: MovementType.SHIP, fromLocationId: 'loc_2', timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString() },
+            { id: 'mov_3', productId: 'prod_3', quantity: 20, type: MovementType.TRANSFER, fromLocationId: 'loc_1', toLocationId: 'loc_2', timestamp: new Date().toISOString() },
+             { id: 'mov_4', productId: 'prod_1', quantity: 5, type: MovementType.SHIP, fromLocationId: 'loc_1', timestamp: new Date().toISOString() }
+        ],
+        users: [
+            { id: 'user_1', email: 'demo@user.com', password: 'password' },
+            { id: 'user_2', email: 'locked@user.com', password: 'password', locked: true },
+        ],
+    };
+
+    const simulateDelay = (ms: number) => new Promise(res => setTimeout(res, ms));
+
+    supabaseService = {
+        auth: {
+            signInWithEmail: async ({ email, password }: { email: string, password?: string }) => {
+                await simulateDelay(500);
+                const user = mockData.users.find(u => u.email === email);
+                if (!user || user.password !== password) {
+                    throw new Error('Invalid credentials');
+                }
+                if (user.locked) {
+                    throw new Error('Account locked');
+                }
+                const sessionUser = { id: user.id, email: user.email };
+                return { data: { user: sessionUser }, error: null };
+            },
+            signOut: async () => {
+                await simulateDelay(200);
+            },
+        },
+        getProducts: async (): Promise<Product[]> => {
+            await simulateDelay(400);
+            return JSON.parse(JSON.stringify(mockData.products));
+        },
+        getLocations: async (): Promise<Location[]> => {
+            await simulateDelay(300);
+            return JSON.parse(JSON.stringify(mockData.locations));
+        },
+        getMovements: async (): Promise<InventoryMovement[]> => {
+            await simulateDelay(500);
+            const sortedMovements = [...mockData.movements].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+            return JSON.parse(JSON.stringify(sortedMovements));
+        },
+        addMovement: async (
+            type: MovementType,
+            productId: string,
+            quantity: number,
+            fromLocationId?: string,
+            toLocationId?: string
+        ): Promise<void> => {
+            await simulateDelay(600);
+            const product = mockData.products.find(p => p.id === productId);
+            if (!product) throw new Error("Product not found");
+
+            if (type === 'SHIP' || type === 'TRANSFER') {
+                if (!fromLocationId) throw new Error("Source location is required.");
+                // In a real multi-location scenario, we'd check stock at the specific location.
+                // For this mock, we assume all stock is at one location for simplicity.
+                if (product.quantity < quantity) {
+                    throw new Error("Insufficient stock at source location.");
+                }
+                product.quantity -= quantity;
+            }
+            if (type === 'RECEIVE' || type === 'TRANSFER') {
+                if (!toLocationId) throw new Error("Destination location is required.");
+                product.quantity += quantity;
+            }
+
+            const newMovement: InventoryMovement = {
+                id: `mov_${Date.now()}`,
+                productId,
+                quantity,
+                type,
+                fromLocationId,
+                toLocationId,
+                timestamp: new Date().toISOString(),
+            };
+            mockData.movements.push(newMovement);
+        },
+    };
+}
+
+
+export const supabase = supabaseService;
