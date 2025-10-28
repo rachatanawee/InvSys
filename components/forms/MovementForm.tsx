@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MovementType, Product, Location } from '../../types';
 import { useInventory } from '../../hooks/useInventory';
 import { Button } from '../ui/Button';
@@ -13,9 +13,22 @@ const MovementForm: React.FC<MovementFormProps> = ({ type, onClose }) => {
     const { products, locations, addMovement, isAddingMovement, addMovementError } = useInventory();
     const { t } = useTranslation();
     const [productId, setProductId] = useState<string>('');
+    const [productSearch, setProductSearch] = useState<string>('');
+    const [showProductDropdown, setShowProductDropdown] = useState<boolean>(false);
     const [quantity, setQuantity] = useState<number>(1);
     const [fromLocationId, setFromLocationId] = useState<string>('');
     const [toLocationId, setToLocationId] = useState<string>('');
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setShowProductDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const titleMap: { [key in MovementType]: string } = {
         [MovementType.RECEIVE]: t('movementForm.titleReceive'),
@@ -38,6 +51,8 @@ const MovementForm: React.FC<MovementFormProps> = ({ type, onClose }) => {
             return;
         }
 
+        setShowProductDropdown(false);
+
         addMovement(movementData, {
             onSuccess: () => {
                 onClose();
@@ -45,19 +60,49 @@ const MovementForm: React.FC<MovementFormProps> = ({ type, onClose }) => {
         });
     };
 
+    const filteredProducts = products?.filter(p => 
+        p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+        p.sku.toLowerCase().includes(productSearch.toLowerCase())
+    ) || [];
+
+    const selectedProduct = products?.find(p => p.id === productId);
+
+    const handleProductSelect = (product: Product) => {
+        setProductId(product.id);
+        setProductSearch(`${product.name} (${product.sku})`);
+        setShowProductDropdown(false);
+    };
+
     const renderProductSelector = () => (
-        <div>
+        <div className="relative" ref={dropdownRef}>
             <label htmlFor="product" className="block text-sm font-medium text-dark-muted-foreground mb-1">{t('movementForm.productLabel')}</label>
-            <select
+            <input
                 id="product"
-                value={productId}
-                onChange={(e) => setProductId(e.target.value)}
+                type="text"
+                value={productSearch}
+                onChange={(e) => {
+                    setProductSearch(e.target.value);
+                    setProductId('');
+                    setShowProductDropdown(true);
+                }}
+                onFocus={() => setShowProductDropdown(true)}
+                placeholder={t('movementForm.productPlaceholder')}
                 className="w-full h-10 px-3 py-2 bg-dark-background border border-dark-border rounded-md"
                 required
-            >
-                <option value="">{t('movementForm.productPlaceholder')}</option>
-                {products?.map((p: Product) => <option key={p.id} value={p.id}>{p.name} ({p.sku})</option>)}
-            </select>
+            />
+            {showProductDropdown && filteredProducts.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-dark-background border border-dark-border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                    {filteredProducts.map((product) => (
+                        <div
+                            key={product.id}
+                            onClick={() => handleProductSelect(product)}
+                            className="px-3 py-2 hover:bg-dark-muted cursor-pointer text-sm"
+                        >
+                            {product.name} ({product.sku}) - Qty: {product.quantity}
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
     );
     
