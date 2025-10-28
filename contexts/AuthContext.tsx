@@ -25,10 +25,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     // Check for a logged-in user in storage on initial load
-    // localStorage (persistent) has priority over sessionStorage (session-only)
     try {
       const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
-      if (storedUser) {
+      const azureUser = localStorage.getItem('azure_user');
+      
+      if (azureUser) {
+        const parsed = JSON.parse(azureUser);
+        setUser({ id: parsed.email, email: parsed.email });
+      } else if (storedUser) {
         setUser(JSON.parse(storedUser));
       }
     } catch (error) {
@@ -63,7 +67,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = async () => {
     await supabase.auth.signOut();
     localStorage.removeItem('user');
-    sessionStorage.removeItem('user'); // Also clear session storage
+    localStorage.removeItem('azure_user');
+    sessionStorage.removeItem('user');
     setUser(null);
   };
 

@@ -4,6 +4,8 @@ import { useNavigate, Navigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { PackageIcon } from '../components/ui/Icons';
 import { useTranslation } from '../hooks/useTranslation';
+import { PublicClientApplication } from '@azure/msal-browser';
+import { msalConfig, loginRequest } from '../lib/azureConfig';
 
 const Login = () => {
     const { t } = useTranslation();
@@ -15,6 +17,11 @@ const Login = () => {
     
     const { signIn, user } = useAuth();
     const navigate = useNavigate();
+    const [msalInstance] = useState(() => {
+        const instance = new PublicClientApplication(msalConfig);
+        instance.initialize();
+        return instance;
+    });
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -32,6 +39,41 @@ const Login = () => {
              } else {
                 setError(t('login.errorUnexpected'));
              }
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleAzureLogin = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            await msalInstance.initialize();
+            const response = await msalInstance.loginPopup(loginRequest);
+            
+            if (response.account) {
+                // Create user session with Azure AD account
+                const azureEmail = response.account.username;
+                console.log('Azure AD login successful:', azureEmail);
+                
+                // For demo: bypass password check for Azure AD users
+                localStorage.setItem('azure_user', JSON.stringify({
+                    email: azureEmail,
+                    name: response.account.name,
+                    provider: 'azure'
+                }));
+                
+                navigate('/dashboard');
+            }
+        } catch (err: any) {
+            console.error('Azure AD login error:', err);
+            if (err.errorCode === 'user_cancelled') {
+                setError('Login cancelled');
+            } else if (err.errorCode === 'popup_window_error') {
+                setError('Please allow popups for this site');
+            } else {
+                setError(`Azure AD login failed: ${err.message || 'Please check your configuration'}`);
+            }
         } finally {
             setIsLoading(false);
         }
@@ -122,6 +164,30 @@ const Login = () => {
                         </Button>
                     </div>
                 </form>
+                
+                <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-dark-border"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                        <span className="px-2 bg-dark-card text-dark-muted-foreground">Or continue with</span>
+                    </div>
+                </div>
+
+                <Button
+                    type="button"
+                    onClick={handleAzureLogin}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    disabled={isLoading}
+                >
+                    <svg className="w-5 h-5 mr-2" viewBox="0 0 23 23" fill="none">
+                        <path d="M0 0h10.931v10.931H0z" fill="#f25022"/>
+                        <path d="M12.069 0H23v10.931H12.069z" fill="#7fba00"/>
+                        <path d="M0 12.069h10.931V23H0z" fill="#00a4ef"/>
+                        <path d="M12.069 12.069H23V23H12.069z" fill="#ffb900"/>
+                    </svg>
+                    Sign in with Microsoft
+                </Button>
                  <div className="text-center text-xs text-dark-muted-foreground">
                     <p>ใช้ <span className="font-mono">demo@user.com</span> / <span className="font-mono">password123</span></p>
                 </div>
