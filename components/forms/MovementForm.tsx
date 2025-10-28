@@ -75,7 +75,7 @@ const MovementForm: React.FC<MovementFormProps> = ({ type, onClose }) => {
 
     const renderProductSelector = () => (
         <div className="relative" ref={dropdownRef}>
-            <label htmlFor="product" className="block text-sm font-medium text-dark-muted-foreground mb-1">{t('movementForm.productLabel')}</label>
+            <label htmlFor="product" className="block text-sm font-medium text-muted-foreground dark:text-dark-muted-foreground mb-1">{t('movementForm.productLabel')}</label>
             <input
                 id="product"
                 type="text"
@@ -87,16 +87,16 @@ const MovementForm: React.FC<MovementFormProps> = ({ type, onClose }) => {
                 }}
                 onFocus={() => setShowProductDropdown(true)}
                 placeholder={t('movementForm.productPlaceholder')}
-                className="w-full h-10 px-3 py-2 bg-dark-background border border-dark-border rounded-md"
+                className="w-full h-10 px-3 py-2 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-md text-foreground dark:text-dark-foreground"
                 required
             />
             {showProductDropdown && filteredProducts.length > 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-dark-background border border-dark-border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                <div className="absolute z-10 w-full mt-1 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-md shadow-lg max-h-48 overflow-y-auto">
                     {filteredProducts.map((product) => (
                         <div
                             key={product.id}
                             onClick={() => handleProductSelect(product)}
-                            className="px-3 py-2 hover:bg-dark-muted cursor-pointer text-sm"
+                            className="px-3 py-2 hover:bg-muted dark:hover:bg-dark-muted cursor-pointer text-sm text-foreground dark:text-dark-foreground"
                         >
                             {product.name} ({product.sku}) - Qty: {product.quantity}
                         </div>
@@ -108,12 +108,12 @@ const MovementForm: React.FC<MovementFormProps> = ({ type, onClose }) => {
     
     const renderLocationSelector = (id: string, value: string, onChange: (val: string) => void, label: string) => (
         <div>
-            <label htmlFor={id} className="block text-sm font-medium text-dark-muted-foreground mb-1">{label}</label>
+            <label htmlFor={id} className="block text-sm font-medium text-muted-foreground dark:text-dark-muted-foreground mb-1">{label}</label>
             <select
                 id={id}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                className="w-full h-10 px-3 py-2 bg-dark-background border border-dark-border rounded-md"
+                className="w-full h-10 px-3 py-2 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-md text-foreground dark:text-dark-foreground"
                 required
             >
                 <option value="">{t('movementForm.locationPlaceholder')}</option>
@@ -124,23 +124,23 @@ const MovementForm: React.FC<MovementFormProps> = ({ type, onClose }) => {
 
     return (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center">
-            <div className="bg-dark-card border border-dark-border rounded-lg shadow-xl w-full max-w-md m-4">
+            <div className="bg-card dark:bg-dark-card border border-border dark:border-dark-border rounded-lg shadow-xl w-full max-w-md m-4 text-card-foreground dark:text-dark-card-foreground">
                 <form onSubmit={handleSubmit}>
                     <div className="p-6">
                         <h2 className="text-xl font-semibold">{titleMap[type]}</h2>
-                        <p className="text-sm text-dark-muted-foreground mt-1">{t('movementForm.description')}</p>
+                        <p className="text-sm text-muted-foreground dark:text-dark-muted-foreground mt-1">{t('movementForm.description')}</p>
                     </div>
                     <div className="p-6 pt-0 space-y-4">
                         {renderProductSelector()}
                         <div>
-                            <label htmlFor="quantity" className="block text-sm font-medium text-dark-muted-foreground mb-1">{t('movementForm.quantityLabel')}</label>
+                            <label htmlFor="quantity" className="block text-sm font-medium text-muted-foreground dark:text-dark-muted-foreground mb-1">{t('movementForm.quantityLabel')}</label>
                             <input
                                 id="quantity"
                                 type="number"
                                 value={quantity}
                                 onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value, 10)))}
                                 min="1"
-                                className="w-full h-10 px-3 py-2 bg-dark-background border border-dark-border rounded-md"
+                                className="w-full h-10 px-3 py-2 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-md text-foreground dark:text-dark-foreground"
                                 required
                             />
                         </div>
@@ -148,7 +148,7 @@ const MovementForm: React.FC<MovementFormProps> = ({ type, onClose }) => {
                         {type !== MovementType.SHIP && renderLocationSelector('toLocation', toLocationId, setToLocationId, t('movementForm.toLocationLabel'))}
                         {addMovementError && <p className="text-sm text-red-500">{addMovementError.message}</p>}
                     </div>
-                    <div className="px-6 py-4 bg-dark-muted/50 flex justify-end gap-2 rounded-b-lg">
+                    <div className="px-6 py-4 bg-muted/50 dark:bg-dark-muted/50 flex justify-end gap-2 rounded-b-lg">
                         <Button type="button" variant="secondary" onClick={onClose} disabled={isAddingMovement}>{t('movementForm.cancelButton')}</Button>
                         <Button type="submit" disabled={isAddingMovement}>{isAddingMovement ? t('movementForm.submittingButton') : t('movementForm.submitButton')}</Button>
                     </div>

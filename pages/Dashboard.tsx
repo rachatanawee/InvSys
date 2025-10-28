@@ -78,13 +78,15 @@ const Dashboard = () => {
                     <div className="h-[350px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                              <BarChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                                <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
+                                <XAxis dataKey="name" stroke="#9CA3AF" fontSize={12} tickLine={false} axisLine={false} />
+                                <YAxis stroke="#9CA3AF" fontSize={12} tickLine={false} axisLine={false} />
                                 <Tooltip
                                     contentStyle={{ 
-                                        backgroundColor: 'hsl(var(--background))', 
-                                        border: '1px solid hsl(var(--border))'
+                                        backgroundColor: 'hsl(var(--background))',
+                                        color: 'hsl(var(--foreground))', 
+                                        border: '1px solid hsl(var(--border))',
+                                        borderRadius: '6px'
                                     }}
                                 />
                                 <Legend />
