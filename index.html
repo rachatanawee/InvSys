@@ -1,0 +1,115 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inventory Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              border: 'hsl(214.3 31.8% 91.4%)',
+              input: 'hsl(214.3 31.8% 91.4%)',
+              ring: 'hsl(25 95% 53%)',
+              background: 'hsl(0 0% 100%)',
+              foreground: 'hsl(222.2 84% 4.9%)',
+              primary: {
+                DEFAULT: 'hsl(25 95% 53%)',
+                foreground: 'hsl(210 40% 98%)',
+              },
+              secondary: {
+                DEFAULT: 'hsl(210 40% 96.1%)',
+                foreground: 'hsl(222.2 47.4% 11.2%)',
+              },
+              destructive: {
+                DEFAULT: 'hsl(0 84.2% 60.2%)',
+                foreground: 'hsl(210 40% 98%)',
+              },
+              muted: {
+                DEFAULT: 'hsl(210 40% 96.1%)',
+                foreground: 'hsl(215.4 16.3% 46.9%)',
+              },
+              accent: {
+                DEFAULT: 'hsl(210 40% 96.1%)',
+                foreground: 'hsl(222.2 47.4% 11.2%)',
+              },
+              popover: {
+                DEFAULT: 'hsl(0 0% 100%)',
+                foreground: 'hsl(222.2 84% 4.9%)',
+              },
+              card: {
+                DEFAULT: 'hsl(0 0% 100%)',
+                foreground: 'hsl(222.2 84% 4.9%)',
+              },
+              dark: {
+                border: "hsl(217 33% 17%)",
+                input: "hsl(217 33% 17%)",
+                ring: "hsl(25 95% 53%)",
+                background: "hsl(222 84% 5%)",
+                foreground: "hsl(210 40% 98%)",
+                primary: {
+                  DEFAULT: "hsl(25 95% 53%)",
+                  foreground: "hsl(210 40% 98%)",
+                },
+                secondary: {
+                  DEFAULT: "hsl(217 33% 17%)",
+                  foreground: "hsl(210 40% 98%)",
+                },
+                destructive: {
+                  DEFAULT: "hsl(0 63% 31%)",
+                  foreground: "hsl(210 40% 98%)",
+                },
+                muted: {
+                  DEFAULT: "hsl(217 33% 17%)",
+                  foreground: "hsl(215 20% 65%)",
+                },
+                accent: {
+                  DEFAULT: "hsl(217 33% 17%)",
+                  foreground: "hsl(210 40% 98%)",
+                },
+                popover: {
+                  DEFAULT: "hsl(222 84% 5%)",
+                  foreground: "hsl(210 40% 98%)",
+                },
+                card: {
+                  DEFAULT: "hsl(222 84% 5%)",
+                  foreground: "hsl(210 40% 98%)",
+                },
+              },
+            },
+          }
+        }
+      }
+    </script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-router-dom/6.23.1/react-router-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tanstack/react-query@5.40.0/build/umd/index.production.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tanstack/react-table@8.17.3/build/umd/index.production.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/recharts@2.12.7/umd/Recharts.min.js"></script>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.4",
+    "recharts": "https://aistudiocdn.com/recharts@^3.3.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "tailwind-merge": "https://aistudiocdn.com/tailwind-merge@^3.3.1",
+    "clsx": "https://aistudiocdn.com/clsx@^2.1.1",
+    "@tanstack/react-query": "https://aistudiocdn.com/@tanstack/react-query@^5.90.5",
+    "@tanstack/react-table": "https://aistudiocdn.com/@tanstack/react-table@^8.21.3"
+  }
+}
+</script>
+</head>
+  <body class="dark bg-dark-background text-dark-foreground">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

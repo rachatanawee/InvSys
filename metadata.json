@@ -1,0 +1,5 @@
+{
+  "name": "Inventory Management System",
+  "description": "A modern, responsive inventory management system for tracking products, stock movements, and locations. Features include receiving, transferring, and shipping stock, with a clear dashboard overview.",
+  "requestFramePermissions": []
+}
