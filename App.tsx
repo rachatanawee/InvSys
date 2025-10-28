@@ -7,6 +7,7 @@ import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
 import Movements from './pages/Movements';
+import Locations from './pages/Locations';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -25,6 +26,7 @@ const App = () => {
                                     <Route path="/dashboard" element={<Dashboard />} />
                                     <Route path="/products" element={<Products />} />
                                     <Route path="/movements" element={<Movements />} />
+                                    <Route path="/locations" element={<Locations />} />
                                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
                                 </Route>
                             </Route>

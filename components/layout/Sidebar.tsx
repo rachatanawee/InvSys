@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { HomeIcon, PackageIcon, ArrowRightLeftIcon } from '../ui/Icons';
+import { HomeIcon, PackageIcon, ArrowRightLeftIcon, MapPinIcon } from '../ui/Icons';
 import { cnLite } from '../../lib/utils';
 import { useTranslation } from '../../hooks/useTranslation';
 
@@ -34,6 +34,10 @@ const Sidebar = () => {
                         <NavLink to="/movements" className={navLinkClasses}>
                             <ArrowRightLeftIcon className="h-4 w-4" />
                             {t('sidebar.movements')}
+                        </NavLink>
+                        <NavLink to="/locations" className={navLinkClasses}>
+                            <MapPinIcon className="h-4 w-4" />
+                            Locations
                         </NavLink>
                     </nav>
                 </div>

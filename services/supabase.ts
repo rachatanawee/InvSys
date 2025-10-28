@@ -69,7 +69,8 @@ if (shouldUseLiveApi) {
             fromLocationId?: string,
             toLocationId?: string
         ): Promise<any> => {
-            const { data, error } = await client
+            // Insert movement record
+            const { error: movementError } = await client
                 .from('inventory_movements')
                 .insert({
                     product_id: productId,
@@ -78,8 +79,64 @@ if (shouldUseLiveApi) {
                     from_location_id: fromLocationId,
                     to_location_id: toLocationId
                 });
+            if (movementError) throw movementError;
+
+            // Update product quantity
+            const { data: currentProduct, error: fetchError } = await client
+                .from('products')
+                .select('quantity')
+                .eq('id', productId)
+                .single();
+            if (fetchError) throw fetchError;
+
+            let newQuantity = currentProduct.quantity;
+            if (type === 'RECEIVE' || type === 'TRANSFER') {
+                newQuantity += quantity;
+            } else if (type === 'SHIP') {
+                newQuantity -= quantity;
+            }
+
+            const { error: updateError } = await client
+                .from('products')
+                .update({ quantity: newQuantity })
+                .eq('id', productId);
+            if (updateError) throw updateError;
+        },
+        updateProduct: async (id: string, updates: Partial<Product>): Promise<void> => {
+            const { error } = await client
+                .from('products')
+                .update({
+                    name: updates.name,
+                    sku: updates.sku,
+                    quantity: updates.quantity,
+                    location_id: updates.locationId
+                })
+                .eq('id', id);
             if (error) throw error;
-            return data;
+        },
+        createProduct: async (product: Omit<Product, 'id'>): Promise<void> => {
+            const { error } = await client
+                .from('products')
+                .insert({
+                    name: product.name,
+                    sku: product.sku,
+                    quantity: product.quantity,
+                    location_id: product.locationId
+                });
+            if (error) throw error;
+        },
+        updateLocation: async (id: string, updates: Partial<Location>): Promise<void> => {
+            const { error } = await client
+                .from('locations')
+                .update({ name: updates.name })
+                .eq('id', id);
+            if (error) throw error;
+        },
+        createLocation: async (location: Omit<Location, 'id'>): Promise<void> => {
+            const { error } = await client
+                .from('locations')
+                .insert({ name: location.name });
+            if (error) throw error;
         },
     };
 } else {
@@ -185,6 +242,34 @@ if (shouldUseLiveApi) {
                 timestamp: new Date().toISOString(),
             };
             mockData.movements.push(newMovement);
+        },
+        updateProduct: async (id: string, updates: Partial<Product>): Promise<void> => {
+            await simulateDelay(400);
+            const productIndex = mockData.products.findIndex(p => p.id === id);
+            if (productIndex === -1) throw new Error('Product not found');
+            mockData.products[productIndex] = { ...mockData.products[productIndex], ...updates };
+        },
+        createProduct: async (product: Omit<Product, 'id'>): Promise<void> => {
+            await simulateDelay(400);
+            const newProduct: Product = {
+                id: `prod_${Date.now()}`,
+                ...product
+            };
+            mockData.products.push(newProduct);
+        },
+        updateLocation: async (id: string, updates: Partial<Location>): Promise<void> => {
+            await simulateDelay(400);
+            const locationIndex = mockData.locations.findIndex(l => l.id === id);
+            if (locationIndex === -1) throw new Error('Location not found');
+            mockData.locations[locationIndex] = { ...mockData.locations[locationIndex], ...updates };
+        },
+        createLocation: async (location: Omit<Location, 'id'>): Promise<void> => {
+            await simulateDelay(400);
+            const newLocation: Location = {
+                id: `loc_${Date.now()}`,
+                ...location
+            };
+            mockData.locations.push(newLocation);
         },
     };
 }

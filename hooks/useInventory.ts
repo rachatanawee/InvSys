@@ -31,9 +31,36 @@ export function useInventory() {
       toLocationId?: string;
     }) => supabase.addMovement(type, productId, quantity, fromLocationId, toLocationId),
     onSuccess: () => {
-      // Invalidate and refetch queries to show updated data
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['movements'] });
+    },
+  });
+
+  const updateProductMutation = useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: any }) => supabase.updateProduct(id, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+  });
+
+  const createProductMutation = useMutation({
+    mutationFn: (product: any) => supabase.createProduct(product),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+  });
+
+  const updateLocationMutation = useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: any }) => supabase.updateLocation(id, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['locations'] });
+    },
+  });
+
+  const createLocationMutation = useMutation({
+    mutationFn: (location: any) => supabase.createLocation(location),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['locations'] });
     },
   });
 
@@ -50,5 +77,11 @@ export function useInventory() {
     addMovement: addMovementMutation.mutate,
     isAddingMovement: addMovementMutation.isPending,
     addMovementError: addMovementMutation.error,
+    updateProduct: updateProductMutation.mutate,
+    isUpdatingProduct: updateProductMutation.isPending,
+    createProduct: createProductMutation.mutate,
+    isCreatingProduct: createProductMutation.isPending,
+    updateLocation: updateLocationMutation.mutate,
+    createLocation: createLocationMutation.mutate,
   };
 }
