@@ -3,6 +3,7 @@ import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './contexts/AuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
@@ -16,8 +17,9 @@ const queryClient = new QueryClient();
 const App = () => {
     return (
         <QueryClientProvider client={queryClient}>
-            <AuthProvider>
-                <LanguageProvider>
+            <ThemeProvider>
+                <AuthProvider>
+                    <LanguageProvider>
                     <Router>
                         <Routes>
                             <Route path="/login" element={<Login />} />
@@ -32,8 +34,9 @@ const App = () => {
                             </Route>
                         </Routes>
                     </Router>
-                </LanguageProvider>
-            </AuthProvider>
+                    </LanguageProvider>
+                </AuthProvider>
+            </ThemeProvider>
         </QueryClientProvider>
     );
 };

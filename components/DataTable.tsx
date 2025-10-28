@@ -53,7 +53,7 @@ export function DataTable<TData, TValue>({
 
     return (
         <div>
-            <div className="rounded-md border border-dark-border">
+            <div className="rounded-md border border-border dark:border-dark-border">
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
@@ -87,7 +87,7 @@ export function DataTable<TData, TValue>({
                                                             onChange={(event) =>
                                                                 header.column.setFilterValue(event.target.value)
                                                             }
-                                                            className="w-full h-8 px-2 py-1 bg-dark-background border border-dark-border rounded-md text-sm focus:ring-1 focus:ring-dark-ring focus:outline-none"
+                                                            className="w-full h-8 px-2 py-1 bg-background dark:bg-dark-background border border-border dark:border-dark-border rounded-md text-sm focus:ring-1 focus:ring-ring dark:focus:ring-dark-ring focus:outline-none"
                                                             onClick={(e) => e.stopPropagation()} // Prevent sorting when clicking input
                                                         />
                                                     ) : null}

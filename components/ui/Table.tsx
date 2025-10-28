@@ -27,7 +27,7 @@ const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTML
     ({ className, ...props }, ref) => (
         <tr
             ref={ref}
-            className={cnLite("border-b border-dark-border transition-colors hover:bg-dark-muted/50 data-[state=selected]:bg-dark-muted", className)}
+            className={cnLite("border-b border-border dark:border-dark-border transition-colors hover:bg-muted/50 dark:hover:bg-dark-muted/50 data-[state=selected]:bg-muted dark:data-[state=selected]:bg-dark-muted", className)}
             {...props}
         />
     )
@@ -38,7 +38,7 @@ const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttributes<
     ({ className, ...props }, ref) => (
         <th
             ref={ref}
-            className={cnLite("h-12 px-4 text-left align-middle font-medium text-dark-muted-foreground [&:has([role=checkbox])]:pr-0", className)}
+            className={cnLite("h-12 px-4 text-left align-middle font-medium text-muted-foreground dark:text-dark-muted-foreground [&:has([role=checkbox])]:pr-0", className)}
             {...props}
         />
     )

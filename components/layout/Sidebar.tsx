@@ -8,14 +8,14 @@ const Sidebar = () => {
     const { t } = useTranslation();
     const navLinkClasses = ({ isActive }: { isActive: boolean }) =>
         cnLite(
-            "flex items-center gap-3 rounded-lg px-3 py-2 text-dark-muted-foreground transition-all hover:text-dark-primary",
-            isActive && "bg-dark-muted text-dark-primary"
+            "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground dark:text-dark-muted-foreground transition-all hover:text-primary dark:hover:text-dark-primary",
+            isActive && "bg-muted dark:bg-dark-muted text-primary dark:text-dark-primary"
         );
 
     return (
-        <div className="hidden border-r border-dark-border bg-dark-muted/40 md:block">
+        <div className="hidden border-r border-border dark:border-dark-border bg-muted/40 dark:bg-dark-muted/40 md:block">
             <div className="flex h-full max-h-screen flex-col gap-2">
-                <div className="flex h-14 items-center border-b border-dark-border px-4 lg:h-[60px] lg:px-6">
+                <div className="flex h-14 items-center border-b border-border dark:border-dark-border px-4 lg:h-[60px] lg:px-6">
                     <a href="/" className="flex items-center gap-2 font-semibold">
                         <PackageIcon className="h-6 w-6" />
                         <span className="">InvSys</span>
