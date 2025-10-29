@@ -17,11 +17,6 @@ const Login = () => {
     
     const { signIn, user } = useAuth();
     const navigate = useNavigate();
-    const [msalInstance] = useState(() => {
-        const instance = new PublicClientApplication(msalConfig);
-        instance.initialize();
-        return instance;
-    });
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -48,17 +43,13 @@ const Login = () => {
         setIsLoading(true);
         setError(null);
         try {
+            const msalInstance = new PublicClientApplication(msalConfig);
             await msalInstance.initialize();
             const response = await msalInstance.loginPopup(loginRequest);
             
             if (response.account) {
-                // Create user session with Azure AD account
-                const azureEmail = response.account.username;
-                console.log('Azure AD login successful:', azureEmail);
-                
-                // For demo: bypass password check for Azure AD users
                 localStorage.setItem('azure_user', JSON.stringify({
-                    email: azureEmail,
+                    email: response.account.username,
                     name: response.account.name,
                     provider: 'azure'
                 }));
